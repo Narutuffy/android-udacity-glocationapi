@@ -8,6 +8,13 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="com.google.andorid.geo.API_KEY"
+            android:value="AIzaSyCpN-5aQfmDqz772R4UN72sXhKb3W7qvBQ"
+            />
+
+
         <activity android:name="com.example.android.shushme.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
