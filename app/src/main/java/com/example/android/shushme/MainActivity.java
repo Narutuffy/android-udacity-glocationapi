@@ -16,15 +16,33 @@ package com.example.android.shushme;
 * limitations under the License.
 */
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
 
     // Constants
     public static final String TAG = MainActivity.class.getSimpleName();
+    public static final int PERMISSIONS_REQUEST_FINE_LOCATION=111;
+    public static final int PLACE_PICKER_REQUEST=1;
 
     // Member variables
     private PlaceListAdapter mAdapter;
@@ -46,6 +64,59 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new PlaceListAdapter(this);
         mRecyclerView.setAdapter(mAdapter);
 
+
+        GoogleApiClient client = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .enableAutoManage(this, this)
+                .build();
+
     }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.i(TAG,"API Client Connection Successful!");
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i(TAG,"API Client Connection Suspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.i(TAG,"API Client Connection Failed");
+    }
+
+    public void onAddPlaceButtonClicked(View view){
+        if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)!=
+        PackageManager.PERMISSION_GRANTED){
+            Toast.makeText(this,"You need to enable location permissions first",Toast.LENGTH_SHORT).show();
+        }
+        Toast.makeText(this,"Location Permissions Granted",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        CheckBox locationPermissions=(CheckBox)findViewById(R.id.location_permission_checkbox);
+        if(ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) {
+            locationPermissions.setChecked(false);
+        }else{
+            locationPermissions.setChecked(true);
+            locationPermissions.setEnabled(false);
+        }
+
+    }
+
+    public void onLocationPermissionClicked(View view){
+        ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},PERMISSIONS_REQUEST_FINE_LOCATION);
+
+    }
+
+
+
 
 }
