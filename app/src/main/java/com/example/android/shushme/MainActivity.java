@@ -17,6 +17,8 @@ package com.example.android.shushme;
 */
 
 import android.Manifest;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -33,9 +35,14 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
+import com.example.android.shushme.provider.PlaceContract;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
 
@@ -93,8 +100,43 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)!=
         PackageManager.PERMISSION_GRANTED){
             Toast.makeText(this,"You need to enable location permissions first",Toast.LENGTH_SHORT).show();
+            return;
         }
-        Toast.makeText(this,"Location Permissions Granted",Toast.LENGTH_SHORT).show();
+        try{
+
+            PlacePicker.IntentBuilder builder= new PlacePicker.IntentBuilder();
+            Intent i= builder.build(this);
+            startActivityForResult(i,PLACE_PICKER_REQUEST);
+
+        }catch (GooglePlayServicesRepairableException e){
+            Log.e(TAG,String.format("Google Play Services not available [%s]",e.getMessage()));
+
+        }catch (GooglePlayServicesNotAvailableException e){
+            Log.e(TAG,String.format("Google Play Services not available [%s]",e.getMessage()));
+
+        }catch ( Exception e){
+            Log.e(TAG,"Place picker exception");
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode==PLACE_PICKER_REQUEST && resultCode==RESULT_OK){
+            Place place= PlacePicker.getPlace(this,data);
+            if(place==null){
+                Log.i(TAG,"No place Selected");
+                return;
+            }
+
+            String placeName= place.getName().toString();
+            String placeAddress= place.getAddress().toString();
+            String placeID= place.getId();
+
+            ContentValues contentValues= new ContentValues();
+            contentValues.put(PlaceContract.PlaceEntry.COLUMN_PLACE_ID,placeID);
+            getContentResolver().insert(PlaceContract.PlaceEntry.CONTENT_URI,contentValues);
+        }
     }
 
     @Override
